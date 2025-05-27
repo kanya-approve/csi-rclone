@@ -76,6 +76,7 @@ type VfsOpt struct {
 	FilePerms          os.FileMode `json:",omitempty"`
 	ChunkSize          string      `json:",omitempty"` // if > 0 read files in chunks
 	ChunkSizeLimit     string      `json:",omitempty"` // if > ChunkSize double the chunk size after each chunk until reached
+	ChunkStreams       int         `json:",omitempty"`
 	CacheMode          string      `json:",omitempty"`
 	CacheMaxAge        string      `json:",omitempty"`
 	CacheMaxSize       string      `json:",omitempty"`
@@ -89,7 +90,6 @@ type VfsOpt struct {
 	UsedIsSize         bool        `json:",omitempty"` // if true, use the `rclone size` algorithm for Used size
 	FastFingerprint    bool        `json:",omitempty"` // if set use fast fingerprints
 	DiskSpaceTotalSize string      `json:",omitempty"`
-	ChunkStreams       int         `json:",omitempty"`
 }
 
 // Options for creating the mount
