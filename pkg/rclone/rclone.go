@@ -113,7 +113,6 @@ type MountOpt struct {
 	NoAppleXattr       bool     `json:",omitempty"`
 	AsyncRead          bool     `json:",omitempty"`
 	CaseInsensitive    string   `json:",omitempty"`
-	BufferSize         string   `json:",omitempty"`
 }
 
 type ConfigCreateRequest struct {
