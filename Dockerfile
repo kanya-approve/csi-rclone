@@ -1,6 +1,5 @@
-# syntax=docker/dockerfile:1.7
-ARG RCLONE_IMAGE_REPOSITORY=ghcr.io/swissdatasciencecenter/rclone
-ARG RCLONE_IMAGE_TAG=sha-1f5fcf2
+ARG RCLONE_IMAGE_REPOSITORY="ghcr.io/swissdatasciencecenter/rclone"
+ARG RCLONE_IMAGE_TAG="sha-9cbde11"
 FROM ${RCLONE_IMAGE_REPOSITORY}:${RCLONE_IMAGE_TAG} AS rclone
 
 FROM golang:1.23.8-bookworm AS build
