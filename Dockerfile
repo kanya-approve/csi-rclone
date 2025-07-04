@@ -4,7 +4,6 @@ ARG RCLONE_IMAGE_TAG=sha-1f5fcf2
 FROM ${RCLONE_IMAGE_REPOSITORY}:${RCLONE_IMAGE_TAG} AS rclone
 
 FROM golang:1.23.8-bookworm AS build
-WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
