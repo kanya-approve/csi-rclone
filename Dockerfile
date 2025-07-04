@@ -11,7 +11,7 @@ COPY cmd/ ./cmd
 COPY pkg/ ./pkg
 RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=1 \
-    go build -trimpath -buildvcs=false -ldflags='-s -w' \
+    go build -trimpath -buildvcs=false -ldflags='-s' \
         -o /csi-rclone ./cmd/csi-rclone-plugin
 
 FROM debian:bookworm-slim
