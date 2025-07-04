@@ -15,9 +15,12 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
         -o /csi-rclone ./cmd/csi-rclone-plugin
 
 FROM debian:bookworm-slim
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates fuse3 && \
-    rm -rf /var/lib/apt/lists/*
+RUN <<EOT bash  
+  set -ex  
+  apt-get update  
+  apt-get install -y --no-install-recommends ca-certificates fuse3  
+  rm -rf /var/lib/apt/lists/*  
+EOT
 COPY --from=build /csi-rclone /csi-rclone
 COPY --from=rclone --chmod=755 /rclone /usr/bin/
 
