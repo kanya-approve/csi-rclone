@@ -40,6 +40,11 @@ csiNodepluginRclone:
         add:
           - SYS_ADMIN
       privileged: true
+    extraEnv:
+      - name: "AWS_ACCESS_KEY_ID"
+        value: "somekey"
+      - name: "AWS_SECRET_ACCESS_KEY"
+        value: "somesecret"
     image:
       repository: csi-rclone
       tag: "latest"
