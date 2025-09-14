@@ -424,6 +424,16 @@ func (r *Rclone) start_daemon() error {
 	if r.cacheDir != "" {
 		rclone_args = append(rclone_args, fmt.Sprintf("--cache-dir=%s", r.cacheDir))
 	}
+	// Add any extra arguments from environment variable
+	extraArgs := os.Getenv("EXTRA_ARGS")
+	if extraArgs != "" {
+		// Split extra args by whitespace and add them
+		for _, arg := range strings.Fields(extraArgs) {
+			if arg != "" {
+				rclone_args = append(rclone_args, arg)
+			}
+		}
+	}
 	loglevel := os.Getenv("LOG_LEVEL")
 	if len(loglevel) == 0 {
 		loglevel = "NOTICE"
