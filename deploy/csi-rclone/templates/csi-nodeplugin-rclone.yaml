@@ -84,7 +84,7 @@ spec:
           value: {{ .Values.csiNodepluginRclone.rclone.cache.size | quote }}
         {{- if .Values.csiNodepluginRclone.rclone.extraArgs }}
         - name: EXTRA_ARGS
-          value: {{ join ";" .Values.csiNodepluginRclone.rclone.extraArgs | quote }}
+          value: {{ .Values.csiNodepluginRclone.rclone.extraArgs | toJson | quote }}
         {{- end }}
         {{- with .Values.csiNodepluginRclone.rclone.extraEnv }}
         {{- if . }}

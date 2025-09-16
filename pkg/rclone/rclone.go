@@ -427,10 +427,16 @@ func (r *Rclone) start_daemon() error {
 	// Add any extra arguments from environment variable
 	extraArgs := os.Getenv("EXTRA_ARGS")
 	if extraArgs != "" {
-		for _, arg := range strings.Split(extraArgs, ";") {
-			arg = strings.TrimSpace(arg)
-			if arg != "" {
-				rclone_args = append(rclone_args, arg)
+		var argList []map[string]string
+		if err := json.Unmarshal([]byte(extraArgs), &argList); err == nil {
+			for _, arg := range argList {
+				if name, exists := arg["name"]; exists && name != "" {
+					if value, hasValue := arg["value"]; hasValue && value != "" {
+						rclone_args = append(rclone_args, fmt.Sprintf("--%s=%s", name, value))
+					} else {
+						rclone_args = append(rclone_args, fmt.Sprintf("--%s", name))
+					}
+				}
 			}
 		}
 	}

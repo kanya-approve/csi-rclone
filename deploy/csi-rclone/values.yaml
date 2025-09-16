@@ -64,9 +64,10 @@ csiNodepluginRclone:
       size: 1G
     # Extra arguments to pass to rclone daemon
     extraArgs: []
-    # - "--buffer-size=32M"
-    # - "--transfers=8"
-    # - "--checkers=16"
+    # - name: "buffer-size"
+    #   value: "32M"
+    # - name: "transfers"
+    #   value: "8"
   serviceAccount:
     annotations: {}
   nodeSelector: {}
