@@ -427,8 +427,8 @@ func (r *Rclone) start_daemon() error {
 	// Add any extra arguments from environment variable
 	extraArgs := os.Getenv("EXTRA_ARGS")
 	if extraArgs != "" {
-		// Split extra args by whitespace and add them
-		for _, arg := range strings.Fields(extraArgs) {
+		for _, arg := range strings.Split(extraArgs, ";") {
+			arg = strings.TrimSpace(arg)
 			if arg != "" {
 				rclone_args = append(rclone_args, arg)
 			}
