@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/SwissDataScienceCenter/csi-rclone/pkg/rclone"
 	"github.com/spf13/cobra"
@@ -111,7 +110,6 @@ func handleController() {
 // unmountOldVols is used to unmount volumes after a restart on a node
 func unmountOldVols() error {
 	const mountType = "fuse.rclone"
-	const unmountTimeout = time.Second * 5
 	klog.Info("Checking for existing mounts")
 	mounter := mountUtils.Mounter{}
 	mounts, err := mounter.List()
@@ -122,7 +120,7 @@ func unmountOldVols() error {
 		if mount.Type != mountType {
 			continue
 		}
-		err := mounter.UnmountWithForce(mount.Path, unmountTimeout)
+		err := mounter.Unmount(mount.Path)
 		if err != nil {
 			klog.Warningf("Failed to unmount %s because of %v.", mount.Path, err)
 			continue

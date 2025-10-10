@@ -344,6 +344,122 @@ func (*nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolu
 	return nil, status.Errorf(codes.Unimplemented, "method NodeExpandVolume not implemented")
 }
 
+func (ns *nodeServer) getVolumeSize(ctx context.Context, volumeId string) (int64, error) {
+	return 100 * (1 << 30), nil // 100GB as default total size
+}
+
+func (ns *nodeServer) getUsedSpace(ctx context.Context, volumeId string) (int64, error) {
+	volume, err := ns.RcloneOps.GetVolumeById(ctx, volumeId)
+	if err != nil {
+		return 0, err
+	}
+
+	usedSpace, err := ns.RcloneOps.GetVolumeSize(ctx, volume)
+	if err != nil {
+		klog.Warningf("Failed to get used space for %s: %v", volumeId, err)
+		return 0, nil
+	}
+
+	return usedSpace, nil
+}
+
+func (ns *nodeServer) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
+	if req.GetVolumeId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty volume id")
+	}
+
+	if req.GetVolumePath() == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty volume path")
+	}
+
+	volumePath := req.GetVolumePath()
+
+	notMnt, err := ns.mounter.IsLikelyNotMountPoint(volumePath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to check mount point %s: %v", volumePath, err))
+	}
+
+	if notMnt {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("volume path %s is not a mount point", volumePath))
+	}
+
+	_, err = os.ReadDir(volumePath)
+	if err != nil {
+		klog.Warningf("Volume %s at path %s is not accessible: %v", req.GetVolumeId(), volumePath, err)
+		return &csi.NodeGetVolumeStatsResponse{
+			Usage: []*csi.VolumeUsage{
+				{
+					Available: 0,
+					Total:     0,
+					Used:      0,
+					Unit:      csi.VolumeUsage_BYTES,
+				},
+			},
+			VolumeCondition: &csi.VolumeCondition{
+				Abnormal: true,
+				Message:  fmt.Sprintf("Volume mount is not accessible: %v", err),
+			},
+		}, nil
+	}
+
+	_, err = ns.mounter.GetMountRefs(volumePath)
+	if err != nil {
+		klog.Warningf("Failed to get mount refs for volume %s at path %s: %v", req.GetVolumeId(), volumePath, err)
+		return &csi.NodeGetVolumeStatsResponse{
+			Usage: []*csi.VolumeUsage{
+				{
+					Available: 0,
+					Total:     0,
+					Used:      0,
+					Unit:      csi.VolumeUsage_BYTES,
+				},
+			},
+			VolumeCondition: &csi.VolumeCondition{
+				Abnormal: true,
+				Message:  fmt.Sprintf("Failed to get mount references: %v", err),
+			},
+		}, nil
+	}
+
+	totalSize, err := ns.getVolumeSize(ctx, req.GetVolumeId())
+	if err != nil {
+		klog.Warningf("Failed to get volume size for %s: %v", req.GetVolumeId(), err)
+		totalSize = 1 << 40 // fallback to 1TB
+	}
+
+	usedSpace, err := ns.getUsedSpace(ctx, req.GetVolumeId())
+	if err != nil {
+		klog.Warningf("Failed to get used space for %s: %v", req.GetVolumeId(), err)
+		usedSpace = 0
+	}
+
+	availableSpace := totalSize - usedSpace
+	if availableSpace < 0 {
+		availableSpace = 0
+	}
+
+	return &csi.NodeGetVolumeStatsResponse{
+		Usage: []*csi.VolumeUsage{
+			{
+				Available: availableSpace,
+				Total:     totalSize,
+				Used:      usedSpace,
+				Unit:      csi.VolumeUsage_BYTES,
+			},
+			{
+				Available: 1000000,
+				Total:     1000000,
+				Used:      0,
+				Unit:      csi.VolumeUsage_INODES,
+			},
+		},
+		VolumeCondition: &csi.VolumeCondition{
+			Abnormal: false,
+			Message:  "Volume is healthy",
+		},
+	}, nil
+}
+
 func (ns *nodeServer) WaitForMountAvailable(mountpoint string) error {
 	for {
 		select {

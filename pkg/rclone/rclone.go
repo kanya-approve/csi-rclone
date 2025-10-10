@@ -33,6 +33,7 @@ type Operations interface {
 	Mount(ctx context.Context, rcloneVolume *RcloneVolume, targetPath string, rcloneConfigData string, readOnly bool, pameters map[string]string) error
 	Unmount(ctx context.Context, volumeId string, targetPath string) error
 	GetVolumeById(ctx context.Context, volumeId string) (*RcloneVolume, error)
+	GetVolumeSize(ctx context.Context, rcloneVolume *RcloneVolume) (int64, error)
 	Cleanup() error
 	Run() error
 }
@@ -127,6 +128,12 @@ type UnmountRequest struct {
 }
 type ConfigDeleteRequest struct {
 	Name string `json:"name"`
+}
+
+type SizeResponse struct {
+	Bytes int64            `json:"bytes"`
+	Count int64            `json:"count"`
+	Sizes map[string]int64 `json:"sizes"`
 }
 
 func (r *Rclone) Mount(ctx context.Context, rcloneVolume *RcloneVolume, targetPath, rcloneConfigData string, readOnly bool, parameters map[string]string) error {
@@ -470,6 +477,33 @@ func (r *Rclone) start_daemon() error {
 	}()
 	r.daemonCmd = cmd
 	return nil
+}
+
+func (r Rclone) GetVolumeSize(ctx context.Context, rcloneVolume *RcloneVolume) (int64, error) {
+	configName := rcloneVolume.deploymentName()
+	remoteWithPath := fmt.Sprintf("%s:%s", configName, rcloneVolume.RemotePath)
+
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/operations/size", r.port), "application/json", bytes.NewBuffer([]byte(fmt.Sprintf(`{"fs": "%s"}`, remoteWithPath))))
+	if err != nil {
+		return 0, fmt.Errorf("failed to get volume size: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return 0, fmt.Errorf("rclone size returned status %d", resp.StatusCode)
+	}
+
+	var sizeResp SizeResponse
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read size response: %w", err)
+	}
+
+	if err := json.Unmarshal(body, &sizeResp); err != nil {
+		return 0, fmt.Errorf("failed to unmarshal size response: %w", err)
+	}
+
+	return sizeResp.Bytes, nil
 }
 
 func (r *Rclone) Run() error {
