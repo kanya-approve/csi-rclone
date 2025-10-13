@@ -424,6 +424,22 @@ func (r *Rclone) start_daemon() error {
 	if r.cacheDir != "" {
 		rclone_args = append(rclone_args, fmt.Sprintf("--cache-dir=%s", r.cacheDir))
 	}
+	// Add any extra arguments from environment variable
+	extraArgs := os.Getenv("EXTRA_ARGS")
+	if extraArgs != "" {
+		var argList []map[string]string
+		if err := json.Unmarshal([]byte(extraArgs), &argList); err == nil {
+			for _, arg := range argList {
+				if name, exists := arg["name"]; exists && name != "" {
+					if value, hasValue := arg["value"]; hasValue && value != "" {
+						rclone_args = append(rclone_args, fmt.Sprintf("--%s=%s", name, value))
+					} else {
+						rclone_args = append(rclone_args, fmt.Sprintf("--%s", name))
+					}
+				}
+			}
+		}
+	}
 	loglevel := os.Getenv("LOG_LEVEL")
 	if len(loglevel) == 0 {
 		loglevel = "NOTICE"

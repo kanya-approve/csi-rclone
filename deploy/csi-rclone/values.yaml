@@ -13,7 +13,7 @@ csiControllerRclone:
   rclone:
     image:
       repository: csi-rclone
-      tag: "latest"
+      tag: latest
     imagePullPolicy: IfNotPresent
     resources:
       {}
@@ -40,7 +40,10 @@ csiNodepluginRclone:
         add:
           - SYS_ADMIN
       privileged: true
+    # Extra environment variables for the rclone container
     extraEnv: []
+    # - name: "DEBUG"
+    #   value: "true"
     image:
       repository: csi-rclone
       tag: "latest"
@@ -59,6 +62,12 @@ csiNodepluginRclone:
       dir: /var/lib/rclone/cache
       # The size allocated for the cache directory
       size: 1G
+    # Extra arguments to pass to rclone daemon
+    extraArgs: []
+    # - name: "buffer-size"
+    #   value: "32M"
+    # - name: "transfers"
+    #   value: "8"
   serviceAccount:
     annotations: {}
   nodeSelector: {}
